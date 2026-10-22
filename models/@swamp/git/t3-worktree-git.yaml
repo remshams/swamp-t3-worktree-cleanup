@@ -1,8 +1,0 @@
-type: '@swamp/git'
-typeVersion: 2026.09.28.1
-id: 911c1840-8960-4b95-823e-a21ae0152f79
-name: t3-worktree-git
-version: 1
-tags: {}
-globalArguments: {}
-methods: {}
