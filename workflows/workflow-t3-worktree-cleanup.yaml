@@ -1,0 +1,71 @@
+id: 1717922e-7477-4530-b230-2b82fc6d1b2d
+name: t3-worktree-cleanup
+description: >-
+  List T3 worktrees whose top-level threads are all settled and that had no
+  thread or code activity for inactiveDays, then remove them after approval.
+tags: {}
+inputs:
+  properties:
+    inactiveDays:
+      type: number
+      default: 4
+      description: Minimum number of days without thread or code activity
+    dryRun:
+      type: boolean
+      default: false
+      description: Report what would be removed without changing anything
+    exclude:
+      type: array
+      items:
+        type: string
+      description: >-
+        Worktree paths or names to keep. Pass it when resuming after the
+        approval, for example --input '{"exclude":["t3-8f562d2a"]}'.
+jobs:
+  - name: cleanup
+    description: Scan, wait for approval, then remove the approved worktrees
+    steps:
+      - name: scan
+        description: List worktrees that match the cleanup criteria
+        task:
+          type: model_method
+          modelIdOrName: t3-worktrees
+          methodName: scan
+          inputs:
+            inactiveDays: ${{ inputs.inactiveDays }}
+        dependsOn: []
+        weight: 0
+        allowFailure: false
+      - name: approve
+        description: Confirm the worktrees listed by the scan
+        task:
+          type: manual_approval
+          prompt: >-
+            Review the DELETE lines printed by the scan step (full details:
+            swamp data query 'modelName == "t3-worktrees" && name == "scan"'
+            --select content). Approve to remove them, or reject to keep
+            everything.
+        dependsOn:
+          - step: scan
+            condition:
+              type: succeeded
+        weight: 0
+        allowFailure: false
+      - name: prune
+        description: Remove the approved worktrees and their merged or pushed branches
+        task:
+          type: model_method
+          modelIdOrName: t3-worktrees
+          methodName: prune
+          inputs:
+            exclude: ${{ inputs.?exclude.orValue([]) }}
+            dryRun: ${{ inputs.dryRun }}
+        dependsOn:
+          - step: approve
+            condition:
+              type: succeeded
+        weight: 0
+        allowFailure: false
+    dependsOn: []
+    weight: 0
+version: 1
