@@ -3,8 +3,6 @@ import { DatabaseSync } from "node:sqlite";
 import { basename, dirname, join } from "node:path";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const GIT_BEHAVIOR_NAME = "t3-worktree-git";
-const MAX_REMOVALS_PER_RUN = 90; // runModel allows 100 nested calls per execution
 
 const GlobalArgsSchema = z.object({
   stateDbPath: z.string().optional().describe(
@@ -413,18 +411,6 @@ export const behavior = {
           readResource: (
             instanceName: string,
           ) => Promise<Record<string, unknown> | null>;
-          runModel: (options: {
-            modelType: string;
-            name: string;
-            method: string;
-            arguments: Record<string, unknown>;
-          }) => Promise<
-            | {
-              ok: true;
-              resources: Array<{ attributes?: Record<string, unknown> }>;
-            }
-            | { ok: false; error: { message: string } }
-          >;
         },
       ) => {
         const previous = await context.readResource("scan") as Scan | null;
@@ -436,7 +422,6 @@ export const behavior = {
         const excluded = new Set(args.exclude);
 
         const results: RemovalResult[] = [];
-        let removalsStarted = 0;
         for (const path of previous.candidates) {
           const current = freshByPath.get(path);
           const skip = (message: string) =>
@@ -461,11 +446,10 @@ export const behavior = {
             skip(`no longer deletable: ${current.reasons.join("; ")}`);
             continue;
           }
-          if (removalsStarted >= MAX_REMOVALS_PER_RUN) {
-            skip("per-run removal limit reached; run the workflow again");
+          if (path === current.repoPath) {
+            skip("primary checkout; never removed");
             continue;
           }
-          removalsStarted++;
           if (args.dryRun) {
             results.push({
               path,
@@ -478,18 +462,14 @@ export const behavior = {
             continue;
           }
 
-          const removal = await context.runModel({
-            modelType: "@swamp/git",
-            name: GIT_BEHAVIOR_NAME,
-            method: "remove_worktree",
-            arguments: { repoPath: current.repoPath, path },
-          });
-          const removed = removal.ok &&
-            removal.resources.some((r) => r.attributes?.removed === true);
-          if (!removed) {
-            const message = removal.ok
-              ? "git did not remove the worktree"
-              : removal.error.message;
+          // Without --force, git refuses worktrees with modified or untracked files.
+          const removal = await git(current.repoPath, [
+            "worktree",
+            "remove",
+            path,
+          ]);
+          if (!removal.ok) {
+            const message = removal.stderr || "git did not remove the worktree";
             context.logger.warning("Failed to remove {path}: {message}", {
               path,
               message,
