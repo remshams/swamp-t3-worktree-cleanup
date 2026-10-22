@@ -8,7 +8,7 @@ inputs:
   properties:
     inactiveDays:
       type: number
-      default: 4
+      default: 8
       description: Minimum number of days without thread or code activity
     dryRun:
       type: boolean
