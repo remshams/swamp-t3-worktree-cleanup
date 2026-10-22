@@ -1,0 +1,8 @@
+swampVersion: 20261021.155838.0
+initializedAt: "2026-10-21T19:29:13.670Z"
+repoId: 909d6cb0-f2fc-47c9-a932-36c986c51dc1
+tools:
+  - claude
+  - codex
+gitignoreManaged: true
+upgradedAt: "2026-10-21T19:31:11.997Z"
