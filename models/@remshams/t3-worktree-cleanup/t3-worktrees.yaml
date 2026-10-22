@@ -1,0 +1,8 @@
+type: '@remshams/t3-worktree-cleanup'
+typeVersion: 2026.10.21.1
+id: d8ec393f-4c0f-4a81-8493-c194549f7540
+name: t3-worktrees
+version: 1
+tags: {}
+globalArguments: {}
+methods: {}
