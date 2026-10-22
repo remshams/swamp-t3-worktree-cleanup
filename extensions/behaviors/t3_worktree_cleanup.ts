@@ -15,7 +15,7 @@ const GlobalArgsSchema = z.object({
 type GlobalArgs = z.infer<typeof GlobalArgsSchema>;
 
 const ScanArgsSchema = z.object({
-  inactiveDays: z.number().min(0).default(4).describe(
+  inactiveDays: z.number().min(0).default(8).describe(
     "Minimum number of days without thread or code activity",
   ),
 });
