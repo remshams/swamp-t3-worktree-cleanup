@@ -64,8 +64,8 @@ issues, PR descriptions and explanations of the code.
   aggregate is a cluster of objects that changes only through its root.
 - Call stateless domain logic that belongs to no single type a domain service,
   and code that runs one use case an application service.
-- Call a part of the model with its own language a bounded context. Swamp
-  behaviors that wrap T3 or git are adapters; keep their output formats out of
-  the workflow's cleanup logic.
+- Call the boundary within which one model and its language stay consistent a
+  bounded context. Swamp behaviors that wrap T3 or git are adapters; keep their
+  output formats out of the workflow's cleanup logic.
 - Use these terms to describe the code that exists. Don't add layers, interfaces
   or folders just to match a DDD pattern; keeping the project small still wins.
