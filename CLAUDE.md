@@ -50,3 +50,22 @@ Behaviors (formerly models) are managed with `swamp behavior` — e.g.
 `swamp behavior run @<type> <method> <name>` to run against a type
 directly). Every `swamp model …` spelling remains supported.
 <!-- END swamp managed section -->
+
+## Domain language
+
+Describe architecture in Domain-Driven Design terms. This applies to docs,
+issues, PR descriptions and explanations of the code.
+
+- Use the project's ubiquitous language: the words the domain uses, such as
+  `worktree` and `thread`. Use the same word in code, docs and conversation, and
+  don't switch between synonyms for one concept.
+- Name the parts of the model by their DDD role. An entity keeps its identity as
+  its data changes. A value object is defined by its values and is immutable. An
+  aggregate is a cluster of objects that changes only through its root.
+- Call stateless domain logic that belongs to no single type a domain service,
+  and code that runs one use case an application service.
+- Call a part of the model with its own language a bounded context. Swamp
+  behaviors that wrap T3 or git are adapters; keep their output formats out of
+  the workflow's cleanup logic.
+- Use these terms to describe the code that exists. Don't add layers, interfaces
+  or folders just to match a DDD pattern; keeping the project small still wins.
