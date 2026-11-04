@@ -43,8 +43,9 @@ jobs:
           prompt: >-
             Review the DELETE lines printed by the scan step (full details:
             swamp data query 'modelName == "t3-worktrees" && name == "scan"'
-            --select content). Approve to remove them, or reject to keep
-            everything.
+            --select content). Lines marked dirty have uncommitted changes
+            that the removal discards. Approve to remove them, or reject to
+            keep everything.
         dependsOn:
           - step: scan
             condition:
