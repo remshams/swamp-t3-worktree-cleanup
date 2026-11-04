@@ -293,7 +293,6 @@ async function analyze(globalArgs: GlobalArgs, inactiveDays: number): Promise<Sc
     }
     const eligible = reasons.length === 0;
     const dirty = (gitInfo?.dirtyFileCount ?? 0) > 0;
-    if (eligible && dirty) reasons.push("uncommitted changes; never deleted");
 
     worktrees.push({
       path,
@@ -315,7 +314,8 @@ async function analyze(globalArgs: GlobalArgs, inactiveDays: number): Promise<Sc
       dirty,
       dirtyFileCount: gitInfo?.dirtyFileCount ?? 0,
       eligible,
-      deletable: eligible && !dirty,
+      // Uncommitted changes don't block cleanup; the scan flags them for the approval.
+      deletable: eligible,
       reasons,
     });
   }
@@ -384,7 +384,7 @@ export const behavior = {
         for (const w of eligible) {
           const line = describeWorktree(w);
           if (w.dirty) {
-            context.logger.warning("KEEP (dirty, {count} files) {line}", {
+            context.logger.warning("DELETE (dirty, {count} files) {line}", {
               count: w.dirtyFileCount,
               line,
             });
@@ -400,7 +400,7 @@ export const behavior = {
     // Not named remove/delete: swamp treats those names as lifecycle deletes and tombstones the behavior's data.
     prune: {
       description:
-        "Remove the deletable worktrees from the latest scan after re-checking each one, then delete their merged or pushed local branches",
+        "Remove the deletable worktrees from the latest scan after re-checking each one, including uncommitted changes, then delete their merged or pushed local branches",
       arguments: PruneArgsSchema,
       execute: async (
         args: z.infer<typeof PruneArgsSchema>,
@@ -457,7 +457,9 @@ export const behavior = {
               status: "planned",
               worktreeRemoved: false,
               branchDeleted: false,
-              message: "dry run; would remove the worktree",
+              message: current.dirty
+                ? `dry run; would remove the worktree and discard ${current.dirtyFileCount} uncommitted file(s)`
+                : "dry run; would remove the worktree",
             });
             continue;
           }
@@ -466,6 +468,7 @@ export const behavior = {
           const removal = await git(current.repoPath, [
             "worktree",
             "remove",
+            ...(current.dirty ? ["--force"] : []),
             path,
           ]);
           if (!removal.ok) {
